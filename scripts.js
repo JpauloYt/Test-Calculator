@@ -1,64 +1,144 @@
-* {
-    box-sizing: border-box;
-    font-family: "Roboto", sans-serif;
-    font-weight: bold;
-    margin: 0;
-    padding: 0;
+const numberButtons = document.querySelectorAll("[data-number]");
+const operationButtons = document.querySelectorAll("[data-operator]");
+const equalsButton = document.querySelector("[data-equals]");
+const deleteButton = document.querySelector("[data-delete]");
+const allClearButton = document.querySelector("[data-all-clear]");
+const previousOperandTextElement = document.querySelector(
+  "[data-previous-operand]"
+);
+const currentOperandTextElement = document.querySelector(
+  "[data-current-operand]"
+);
+
+class Calculator {
+  constructor(previousOperandTextElement, currentOperandTextElement) {
+    this.previousOperandTextElement = previousOperandTextElement;
+    this.currentOperandTextElement = currentOperandTextElement;
+    this.clear();
   }
-  
-  body {
-    background: linear-gradient(to right, #233329, #41b883);
+
+  formatDisplayNumber(number) {
+    const stringNumber = number.toString();
+
+    const integerDigits = parseFloat(stringNumber.split(".")[0]);
+    const decimalDigits = stringNumber.split(".")[1];
+
+    let integerDisplay;
+
+    if (isNaN(integerDigits)) {
+      integerDisplay = "";
+    } else {
+      integerDisplay = integerDigits.toLocaleString("en", {
+        maximumFractionDigits: 0,
+      });
+    }
+
+    if (decimalDigits != null) {
+      return `${integerDisplay}.${decimalDigits}`;
+    } else {
+      return integerDisplay;
+    }
   }
-  
-  .grid-container {
-    display: grid;
-    justify-content: center;
-    align-content: center;
-    min-height: 100vh;
-    grid-template-columns: repeat(4, 100px);
-    grid-template-rows: minmax(120px, auto) repeat(5, 100px);
+
+  delete() {
+    this.currentOperand = this.currentOperand.toString().slice(0, -1);
   }
-  
-  .grid-container > button {
-    cursor: pointer;
-    font-size: 2rem;
-    border: none;
-    outline: none;
-    background-color: #111;
-    color: #eee;
+
+  calculate() {
+    let result;
+
+    const _previousOperand = parseFloat(this.previousOperand);
+    const _currentOperand = parseFloat(this.currentOperand);
+
+    if (isNaN(_previousOperand) || isNaN(_currentOperand)) return;
+
+    switch (this.operation) {
+      case "+":
+        result = _previousOperand + _currentOperand;
+        break;
+      case "-":
+        result = _previousOperand - _currentOperand;
+        break;
+      case "÷":
+        result = _previousOperand / _currentOperand;
+        break;
+      case "*":
+        result = _previousOperand * _currentOperand;
+        break;
+      default:
+        return;
+    }
+
+    this.currentOperand = result;
+    this.operation = undefined;
+    this.previousOperand = "";
   }
-  
-  .grid-container > button:hover {
-    background-color: #eee;
-    color: #111;
+
+  chooseOperation(operation) {
+    if (this.currentOperand === "") return;
+
+    if (this.previousOperand !== "") {
+      this.calculate();
+    }
+
+    this.operation = operation;
+
+    this.previousOperand = this.currentOperand;
+    this.currentOperand = "";
   }
-  
-  .grid-container > .operator {
-    background: #41b88375;
+
+  appendNumber(number) {
+    if (this.currentOperand.includes(".") && number === ".") return;
+
+    this.currentOperand = `${this.currentOperand}${number.toString()}`;
   }
-  
-  .span-two {
-    grid-column: span 2;
+
+  clear() {
+    this.currentOperand = "";
+    this.previousOperand = "";
+    this.operation = undefined;
   }
-  
-  .grid-container > .output {
-    grid-column: 1 / -1;
-    background: #222;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: space-around;
-    padding: 10px;
-    word-wrap: break-word;
-    word-break: break-all;
+
+  updateDisplay() {
+    this.previousOperandTextElement.innerText = `${this.formatDisplayNumber(
+      this.previousOperand
+    )} ${this.operation || ""}`;
+    this.currentOperandTextElement.innerText = this.formatDisplayNumber(
+      this.currentOperand
+    );
   }
-  
-  .grid-container > .output > .previous-operand {
-    color: rgba(255, 255, 255, 0.75);
-    font-size: 1.5rem;
-  }
-  
-  .grid-container > .output > .current-operand {
-    color: white;
-    font-size: 2.5rem;
-  }
+}
+
+const calculator = new Calculator(
+  previousOperandTextElement,
+  currentOperandTextElement
+);
+
+for (const numberButton of numberButtons) {
+  numberButton.addEventListener("click", () => {
+    calculator.appendNumber(numberButton.innerText);
+    calculator.updateDisplay();
+  });
+}
+
+for (const operationButton of operationButtons) {
+  operationButton.addEventListener("click", () => {
+    calculator.chooseOperation(operationButton.innerText);
+    calculator.updateDisplay();
+  });
+}
+
+allClearButton.addEventListener("click", () => {
+  calculator.clear();
+  calculator.updateDisplay();
+});
+
+equalsButton.addEventListener("click", () => {
+  calculator.calculate();
+  calculator.updateDisplay();
+});
+
+deleteButton.addEventListener("click", () => {
+  calculator.delete();
+  calculator.updateDisplay();
+});
